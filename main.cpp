@@ -37,6 +37,8 @@ bool firstMouse = true;
 float deltaTime = 0.0f;// Time between current and last frame
 float lastFrame = 0.0f;// Time of last frame
 
+bool showCube = false;
+
 int main() {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -161,13 +163,15 @@ int main() {
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         // Draw object: Cube
-        glBindVertexArray(cubeVAO);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        model = mat4(1.0f);
-        model = translate(model, vec3(1.0f, 0.0f, 0.0f));
-        // model = rotate(model, radians(angle), vec3(1.0f, 0.3f, 0.5f));
-        ourShader.setMat4("model", model);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        if (showCube) {
+            glBindVertexArray(cubeVAO);
+            glBindTexture(GL_TEXTURE_2D, texture);
+            model = mat4(1.0f);
+            model = translate(model, vec3(1.0f, 0.0f, 0.0f));
+            // model = rotate(model, radians(angle), vec3(1.0f, 0.3f, 0.5f));
+            ourShader.setMat4("model", model);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
 
         // Check and call events and swap the buffers
         glfwSwapBuffers(window);
@@ -209,6 +213,14 @@ void processInput(GLFWwindow *window) {
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
         cameraPos += normalize(cross(cameraFront, cameraUp)) * cameraSpeed;
+    }
+
+    // Create cube
+    if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS) {
+        showCube = false;
+    }
+    if (glfwGetKey(window, GLFW_KEY_9) == GLFW_PRESS) {
+        showCube = true;
     }
 }
 
