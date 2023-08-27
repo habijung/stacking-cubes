@@ -69,9 +69,6 @@ int main() {
 
     // Configure global OpenGL state
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_STENCIL_TEST);
-    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);// 여기에서 사용하는 이유를 정확히 모르겠음
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     // Shader
@@ -135,7 +132,7 @@ int main() {
 
         // Rendering somethings
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Object: Plane
         // Camera, View transformation
@@ -146,9 +143,6 @@ int main() {
         shaderWall.use();
         shaderWall.setMat4("view", view);
         shaderWall.setMat4("projection", projection);
-
-        // Set stencil options
-        glStencilMask(0x00);// Stencil Buffer에 plane을 그리지 않기 위해 0으로 mask bit를 설정
 
         // Draw
         glBindVertexArray(planeVAO);
@@ -164,10 +158,6 @@ int main() {
         shaderWood.setMat4("view", view);
         shaderWood.setMat4("projection", projection);
 
-        // Set stencil options
-        glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        glStencilMask(0xFF);// 그리고 싶은 부분은 1로 mask bit 설정
-
         // Draw
         glBindVertexArray(cubeVAO);
         glBindTexture(GL_TEXTURE_2D, textureWood);
@@ -177,30 +167,6 @@ int main() {
         shaderWood.setMat4("model", model);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
-
-        // Object: Cube Outline
-        shaderOutline.use();
-        shaderOutline.setMat4("view", view);
-        shaderOutline.setMat4("projection", projection);
-
-        // Set stencil options
-        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-        glStencilMask(0x00);
-        glDisable(GL_DEPTH_TEST);
-
-        // Draw
-        glBindVertexArray(cubeVAO);
-        model = mat4(1.0f);
-        model = translate(model, vec3(1.0f, 0.0f, 0.0f));
-        model = scale(model, vec3(1.03f));
-        shaderOutline.setMat4("model", model);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindVertexArray(0);
-
-        // End stencil testing
-        glStencilMask(0xFF);
-        glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        glEnable(GL_DEPTH_TEST);
 
         // Check and call events and swap the buffers
         glfwSwapBuffers(window);
