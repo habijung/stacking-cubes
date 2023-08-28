@@ -4,6 +4,7 @@
 
 #define GLFW_INCLUDE_NONE
 #define STB_IMAGE_IMPLEMENTATION
+#define BUFSIZE 512
 
 #include "GLFW/glfw3.h"
 #include "glad/glad.h"
@@ -23,6 +24,7 @@ void mouse_callback(GLFWwindow *window, double px, double py);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods);
+void processHits(GLint hits, GLuint buffer[]);
 unsigned int load_texture(const char *img);
 
 // Create camera
@@ -44,6 +46,18 @@ bool showCursor = true;
 
 float deltaTime = 0.0f;// Time between current and last frame
 float lastFrame = 0.0f;// Time of last frame
+
+struct PixelInfo {
+    uint ObjectID = 0;
+    uint DrawID = 0;
+    uint PrimID = 0;
+
+    void Print() {
+        printf("Object %d draw %d prim %d\n", ObjectID, DrawID, PrimID);
+    }
+};
+unsigned int framebuffer;
+
 
 int main() {
     glfwInit();
@@ -148,7 +162,7 @@ int main() {
     screenShader.setInt("screenTexture", 0);
     // framebuffer configuration
     // -------------------------
-    unsigned int framebuffer;
+    //    unsigned int framebuffer;
     glGenFramebuffers(1, &framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
     // create a color attachment texture
@@ -197,12 +211,14 @@ int main() {
         shaderWall.setMat4("projection", projection);
 
         // Draw
+        glPushName(1);
         glBindVertexArray(planeVAO);
         glBindTexture(GL_TEXTURE_2D, textureWall);// Default texture: GL_TEXTURE0
         model = mat4(1.0f);
         model = translate(model, vec3(-1.5f, 0.0f, 0.0f));
         shaderWall.setMat4("model", model);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glPopName();
         glBindVertexArray(0);
 
         // Object: Cube
@@ -211,6 +227,7 @@ int main() {
         shaderWood.setMat4("projection", projection);
 
         // Draw
+        glPushName(2);
         glBindVertexArray(cubeVAO);
         glBindTexture(GL_TEXTURE_2D, textureWood);
         model = mat4(1.0f);
@@ -218,6 +235,7 @@ int main() {
         // model = rotate(model, radians(angle), vec3(1.0f, 0.3f, 0.5f));
         shaderWood.setMat4("model", model);
         glDrawArrays(GL_TRIANGLES, 0, 36);
+        glPopName();
         glBindVertexArray(0);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -371,5 +389,37 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
         double xpos, ypos;
         glfwGetCursorPos(window, &xpos, &ypos);
         cout << "Click: (" << xpos << ", " << ypos << ")" << endl;
+
+//        PixelInfo Pixel;
+//        glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer);
+//        glReadBuffer(GL_COLOR_ATTACHMENT0);
+//        glReadPixels(xpos, SCR_HEIGHT - ypos, 1, 1, GL_RGB_INTEGER, GL_UNSIGNED_INT, &Pixel);
+//        glReadBuffer(GL_NONE);
+//        glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+//        Pixel.Print();
+        GLint hits;
+        hits = glRenderMode(GL_RENDER);
+        cout << hits << endl;
     }
 }
+
+void processHits(GLint hits, GLuint buffer[])
+{
+    unsigned int i, j;
+    GLuint names, *ptr;
+
+    printf("hits = %d\n", hits);
+    ptr = (GLuint *) buffer;
+    for (i = 0; i < hits; i++) {  /* for each hit  */
+        names = *ptr;
+        printf(" number of names for hit = %d\n", names); ptr++;
+        printf("  z1 is %g;", (float) *ptr/0x7fffffff); ptr++;
+        printf(" z2 is %g\n", (float) *ptr/0x7fffffff); ptr++;
+        printf("   the name is ");
+        for (j = 0; j < names; j++) {  /* for each name */
+            printf("%d ", *ptr); ptr++;
+        }
+        printf("\n");
+    }
+}
+
